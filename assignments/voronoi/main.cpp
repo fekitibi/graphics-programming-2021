@@ -66,6 +66,7 @@ int main()
         return -1;
     }
 
+
     // NEW!
     // build and compile the shader programs
     shaderPrograms.push_back(Shader("shaders/shader.vert", "shaders/color.frag"));
@@ -134,55 +135,48 @@ SceneObject instantiateCone(float r, float g, float b, float offsetX, float offs
     // CODE HERE
 
     std::vector<float> vertexData;
-    std::vector<GLint> vertexIndices;
+
 
 
     int triangleCount = 50;
     float PI = 3.14159265;
     float angleInterval = (2 * PI) / (float)triangleCount;
-    float coneHeight = 0.5f;
+    float coneHeight = 1.0f;
 
-    // vertex center
-    vertexData.push_back(0.0f);
-    vertexData.push_back(0.0f);
-    vertexData.push_back(coneHeight);
-    // color
-    //vertexData.push_back(r);
-    //vertexData.push_back(g);
-    //vertexData.push_back(b);
+    for (int i = 0; i < triangleCount; i++) {
+        // vertex 1
+        vertexData.push_back(0.0f);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(coneHeight);
 
-    for (int i = 0; i <= triangleCount; i++) {
+        // vertex 2
+        // current angle
         float angle = i * angleInterval;
-        // vertex circle at angle i*angleInterval
         vertexData.push_back(cos(angle) / 2);
         vertexData.push_back(sin(angle) / 2);
         vertexData.push_back(0.0f);
-        // color
-        //vertexData.push_back(r);
-        //vertexData.push_back(g);
-        //vertexData.push_back(b);
-    }
 
-    for (int i = 0; i < triangleCount; i++) {
-        vertexIndices.push_back(0);
-        vertexIndices.push_back(i + 1);
-        vertexIndices.push_back(i + 2);
+        // vertex 3
+        // advance one angle interval to find the last vertex of the triangle
+        angle += angleInterval;
+        vertexData.push_back(cos(angle) / 2);
+        vertexData.push_back(sin(angle) / 2);
+        vertexData.push_back(0.0f);
     }
 
 
     // Store the number of vertices in the mesh in the scene object.
     // CODE HERE
 
-    sceneObject.vertexCount = vertexIndices.size();
+    sceneObject.vertexCount = vertexData.size()/3;
 
     // Declare and generate a VAO and VBO (and an EBO if you decide the work with indices).
     // CODE HERE
     
-    unsigned int VAO, vertexDataVBO, vertexIndicesEBO;
+    unsigned int VAO, vertexDataVBO;
     
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &vertexDataVBO);
-    glGenBuffers(1, &vertexIndicesEBO);
 
     // Bind and set the VAO and VBO (and optionally a EBO) in the correct order.
     // CODE HERE
@@ -192,22 +186,17 @@ SceneObject instantiateCone(float r, float g, float b, float offsetX, float offs
     // creating and seting the content of the VBO (type, size, pointer to start, and how it is used)
     glBindBuffer(GL_ARRAY_BUFFER, vertexDataVBO);
     glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(GLfloat), &vertexData[0], GL_STATIC_DRAW);
-    // creating and seting the content of the EBO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndicesEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(GLint), &vertexIndices[0], GL_STATIC_DRAW);
 
     // Set the position attribute pointers in the shader.
     // CODE HERE
     
     glBindBuffer(GL_ARRAY_BUFFER, vertexDataVBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndicesEBO);
 
     int posSize = 3;/*, colorSize = 3;*/
     int posAttributeLocation = glGetAttribLocation(activeShader->ID, "pos");
 
     glEnableVertexAttribArray(posAttributeLocation);
-    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE,
-        (posSize /*+ colorSize*/) * (int)sizeof(float), (void*)0);
+    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, 0, 0);
 
     /*int colorAttributeLocation = glGetAttribLocation(activeShader->ID, "aColor");
 
@@ -244,7 +233,7 @@ void button_input_callback(GLFWwindow* window, int button, int action, int mods)
     // - A random value in the range [0, 1] should be used for the r, g and b variables.
     // CODE HERE
 
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
         // get screen size and click coordinates
         double xPos, yPos;
@@ -280,6 +269,14 @@ void key_input_callback(GLFWwindow* window, int button, int other,int action, in
     // Key 1 sets the activeShader to &shaderPrograms[0];
     //   and so on.
     // CODE HERE
+
+    if (button == GLFW_KEY_1 && action == GLFW_PRESS)
+        activeShader = &shaderPrograms[0];
+    if (button == GLFW_KEY_2 && action == GLFW_PRESS)
+        activeShader = &shaderPrograms[1];
+    if (button == GLFW_KEY_3 && action == GLFW_PRESS)
+        activeShader = &shaderPrograms[2];
+        
 }
 
 

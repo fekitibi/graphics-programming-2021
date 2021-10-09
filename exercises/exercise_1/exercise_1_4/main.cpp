@@ -5,18 +5,23 @@
 #include <vector>
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 
 // function declarations
 // ---------------------
-void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO);
-void setupShape(unsigned int shaderProgram, unsigned int &VAO, unsigned int &vertexCount);
+void createArrayBuffer(const std::vector<float>& array, unsigned int& VBO);
+void setupShape(unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount);
 void draw(unsigned int shaderProgram, unsigned int VAO, unsigned int vertexCount);
+void drawCircle(const unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount, GLfloat radius, GLint numberOfSides);
 
 
 // glfw functions
 // --------------
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow* window);
 
 
 // settings
@@ -27,22 +32,22 @@ const unsigned int SCR_HEIGHT = 800;
 
 // shader programs
 // ---------------
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "layout (location = 1) in vec3 aColor;\n"
-                                 "out vec3 vtxColor; // output a color to the fragment shader\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "   vtxColor = aColor;\n"
-                                 "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "in  vec3 vtxColor;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   "   FragColor = vec4(vtxColor, 1.0);\n"
-                                   "}\n\0";
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in vec3 aColor;\n"
+"out vec3 vtxColor; // output a color to the fragment shader\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   vtxColor = aColor;\n"
+"}\0";
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"in  vec3 vtxColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(vtxColor, 1.0);\n"
+"}\n\0";
 
 
 
@@ -56,7 +61,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
+#ifdef _APPLE_
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
 #endif
 
@@ -132,8 +137,8 @@ int main()
     unsigned int VAO, vertexCount;
     // generate geometry in a vertex array object (VAO), record the number of vertices in the mesh,
     // tells the shader how to read it
-    setupShape(shaderProgram, VAO, vertexCount);
-
+    //setupShape(shaderProgram, VAO, vertexCount);
+    drawCircle(shaderProgram, VAO, vertexCount, 0.5, 200);
 
     // render loop
     // -----------
@@ -164,7 +169,7 @@ int main()
 
 // create a vertex buffer object (VBO) from an array of values, return VBO handle (set as reference)
 // -------------------------------------------------------------------------------------------------
-void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO){
+void createArrayBuffer(const std::vector<float>& array, unsigned int& VBO) {
     // create the VBO on OpenGL and get a handle to it
     glGenBuffers(1, &VBO);
     // bind the VBO
@@ -176,21 +181,86 @@ void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO){
 
 // create the geometry, a vertex array object representing it, and set how a shader program should read it
 // -------------------------------------------------------------------------------------------------------
-void setupShape(const unsigned int shaderProgram,unsigned int &VAO, unsigned int &vertexCount){
+
+void drawCircle(const unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount, GLfloat radius, GLint numberOfSides) {
+
+    unsigned int posVBO, colorVBO;
+    float angle = M_PI * 2 / numberOfSides;
+
+    float xPos{ 0 }, yPos{ 0 }, zPos{ 0 };
+
+    float prevX = xPos;
+    float prevY = yPos - radius;
+
+    std::vector<float> vertices;
+
+    for (int i{ 1 }; i <= numberOfSides; i++) {
+        float newX = radius * sin(angle * i);
+        float newY = -radius * cos(angle * i);
+
+        vertices.push_back(0);
+        vertices.push_back(0);
+        vertices.push_back(0);
+        vertices.push_back(prevX);
+        vertices.push_back(prevY);
+        vertices.push_back(0);
+        vertices.push_back(newX);
+        vertices.push_back(newY);
+        vertices.push_back(0);
+        prevX = newX;
+        prevY = newY;
+    }
+
+
+    createArrayBuffer(vertices, posVBO);
+    std::vector<float> colors;
+    for (int i{ 0 }; i <= numberOfSides * 3; i++) {
+        colors.push_back(0);
+        colors.push_back(1);
+        colors.push_back(0);
+
+    }
+    createArrayBuffer(colors, colorVBO);
+
+    vertexCount = numberOfSides * 3;
+    glGenVertexArrays(1, &VAO);
+
+    // bind vertex array object
+    glBindVertexArray(VAO);
+
+    // set vertex shader attribute "aPos"
+    glBindBuffer(GL_ARRAY_BUFFER, posVBO);
+
+    int posSize = 3;
+    int posAttributeLocation = glGetAttribLocation(shaderProgram, "aPos");
+
+    glEnableVertexAttribArray(posAttributeLocation);
+    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // set vertex shader attribute "aColor"
+    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
+
+    int colorSize = 3;
+    int colorAttributeLocation = glGetAttribLocation(shaderProgram, "aColor");
+
+    glEnableVertexAttribArray(colorAttributeLocation);
+    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE, 0, 0);
+}
+void setupShape(const unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount) {
 
     unsigned int posVBO, colorVBO;
     createArrayBuffer(std::vector<float>{
-            // position
-            0.0f,  0.0f, 0.0f,
-            0.5f,  0.0f, 0.0f,
-            0.5f,  0.5f, 0.0f
+        // position
+        0.0f, 0.0f, 0.0f,
+            0.5f, 0.0f, 0.0f,
+            0.5f, 0.5f, 0.0f
     }, posVBO);
 
-    createArrayBuffer( std::vector<float>{
-            // color
-            1.0f,  0.0f, 0.0f,
-            1.0f,  0.0f, 0.0f,
-            1.0f,  0.0f, 0.0f
+    createArrayBuffer(std::vector<float>{
+        // color
+        1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f
     }, colorVBO);
 
     // tell how many vertices to draw
@@ -225,7 +295,7 @@ void setupShape(const unsigned int shaderProgram,unsigned int &VAO, unsigned int
 
 // tell opengl to draw a vertex array object (VAO) using a give shaderProgram
 // --------------------------------------------------------------------------
-void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsigned int vertexCount){
+void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsigned int vertexCount) {
     // set active shader program
     glUseProgram(shaderProgram);
     // bind vertex array object
@@ -237,7 +307,7 @@ void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsign
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -252,4 +322,3 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
-

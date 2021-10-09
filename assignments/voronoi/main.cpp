@@ -94,6 +94,13 @@ int main()
         // - bind the VAO; set the uniform variables; and draw.
         // CODE HERE
 
+        for (SceneObject obj : sceneObjects) {
+            glBindVertexArray(obj.VAO);
+            activeShader->setVec2("offset", glm::vec2(obj.x, obj.y));
+            activeShader->setVec3("color", glm::vec3(obj.r, obj.g, obj.b));
+            glDrawArrays(GL_TRIANGLES, 0, obj.vertexCount);
+        }
+            
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
@@ -116,18 +123,106 @@ SceneObject instantiateCone(float r, float g, float b, float offsetX, float offs
 
     // you will need to store offsetX, offsetY, r, g and b in the object.
     // CODE HERE
+    sceneObject.r = r;
+    sceneObject.g = g;
+    sceneObject.b = b;
+
+    sceneObject.x = offsetX;
+    sceneObject.y = offsetY;
+
     // Build the geometry into an std::vector<float> or float array.
     // CODE HERE
+
+    std::vector<float> vertexData;
+    std::vector<GLint> vertexIndices;
+
+
+    int triangleCount = 50;
+    float PI = 3.14159265;
+    float angleInterval = (2 * PI) / (float)triangleCount;
+    float coneHeight = 0.5f;
+
+    // vertex center
+    vertexData.push_back(0.0f);
+    vertexData.push_back(0.0f);
+    vertexData.push_back(coneHeight);
+    // color
+    //vertexData.push_back(r);
+    //vertexData.push_back(g);
+    //vertexData.push_back(b);
+
+    for (int i = 0; i <= triangleCount; i++) {
+        float angle = i * angleInterval;
+        // vertex circle at angle i*angleInterval
+        vertexData.push_back(cos(angle) / 2);
+        vertexData.push_back(sin(angle) / 2);
+        vertexData.push_back(0.0f);
+        // color
+        //vertexData.push_back(r);
+        //vertexData.push_back(g);
+        //vertexData.push_back(b);
+    }
+
+    for (int i = 0; i < triangleCount; i++) {
+        vertexIndices.push_back(0);
+        vertexIndices.push_back(i + 1);
+        vertexIndices.push_back(i + 2);
+    }
+
+
     // Store the number of vertices in the mesh in the scene object.
     // CODE HERE
+
+    sceneObject.vertexCount = vertexIndices.size();
+
     // Declare and generate a VAO and VBO (and an EBO if you decide the work with indices).
     // CODE HERE
+    
+    unsigned int VAO, vertexDataVBO, vertexIndicesEBO;
+    
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &vertexDataVBO);
+    glGenBuffers(1, &vertexIndicesEBO);
+
     // Bind and set the VAO and VBO (and optionally a EBO) in the correct order.
     // CODE HERE
+    
+    glBindVertexArray(VAO);
+
+    // creating and seting the content of the VBO (type, size, pointer to start, and how it is used)
+    glBindBuffer(GL_ARRAY_BUFFER, vertexDataVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(GLfloat), &vertexData[0], GL_STATIC_DRAW);
+    // creating and seting the content of the EBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndicesEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(GLint), &vertexIndices[0], GL_STATIC_DRAW);
+
     // Set the position attribute pointers in the shader.
     // CODE HERE
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vertexDataVBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndicesEBO);
+
+    int posSize = 3;/*, colorSize = 3;*/
+    int posAttributeLocation = glGetAttribLocation(activeShader->ID, "pos");
+
+    glEnableVertexAttribArray(posAttributeLocation);
+    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE,
+        (posSize /*+ colorSize*/) * (int)sizeof(float), (void*)0);
+
+    /*int colorAttributeLocation = glGetAttribLocation(activeShader->ID, "aColor");
+
+    glEnableVertexAttribArray(colorAttributeLocation);
+    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE,
+        (posSize + colorSize) * (int)sizeof(float), (void*)(posSize * sizeof(float)));*/
+
+
+    glBindVertexArray(0);
+
     // Store the VAO handle in the scene object.
     // CODE HERE
+
+
+    sceneObject.VAO = VAO;
 
     // 'return' the scene object for the cone instance you just created.
     return sceneObject;
@@ -141,12 +236,39 @@ void button_input_callback(GLFWwindow* window, int button, int action, int mods)
     // Test button press, see documentation at:
     //     https://www.glfw.org/docs/latest/input_guide.html#input_mouse_button
     // CODE HERE
+    std::cout << (float)rand() / (float)RAND_MAX << '\n';
     // If a left mouse button press was detected, call instantiateCone:
     // - Push the return value to the back of the global 'vector<SceneObject> sceneObjects'.
     // - The click position should be transformed from screen coordinates to normalized device coordinates,
     //   to obtain the offset values that describe the position of the object in the screen plane.
     // - A random value in the range [0, 1] should be used for the r, g and b variables.
     // CODE HERE
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        // get screen size and click coordinates
+        double xPos, yPos;
+        int xScreen, yScreen;
+        glfwGetCursorPos(window, &xPos, &yPos);
+        glfwGetWindowSize(window, &xScreen, &yScreen);
+
+        // convert from screen space to normalized display coordinates
+        float xNdc = (float)xPos / (float)xScreen * 2.0f - 1.0f;
+        float yNdc = (float)yPos / (float)yScreen * 2.0f - 1.0f;
+        yNdc = -yNdc;
+
+        // getting the random colors
+        float randR = (float)rand() / (float)RAND_MAX;
+        float randG = (float)rand() / (float)RAND_MAX;
+        float randB = (float)rand() / (float)RAND_MAX;
+
+        std::cout << randR;
+
+        SceneObject object = instantiateCone(randR, randG, randB, xNdc, yNdc);
+
+        sceneObjects.push_back(object);
+    }
+
 }
 
 // glfw: called whenever a keyboard key is pressed

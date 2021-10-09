@@ -206,13 +206,13 @@ void setupShape(const unsigned int shaderProgram,unsigned int &VAO, unsigned int
     int posAttributeLocation = glGetAttribLocation(shaderProgram, "aPos");
 
     glEnableVertexAttribArray(posAttributeLocation);
-    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
     int colorSize = 3;
     int colorAttributeLocation = glGetAttribLocation(shaderProgram, "aColor");
 
     glEnableVertexAttribArray(colorAttributeLocation);
-    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE, 0,
+    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
                           (void*)(vertexCount * 3 * sizeof(float)));
 
 }

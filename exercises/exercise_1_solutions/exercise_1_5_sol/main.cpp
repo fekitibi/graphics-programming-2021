@@ -11,6 +11,9 @@
 void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO);
 void setupShape(unsigned int shaderProgram, float time, unsigned int &posVBO, unsigned int &colorVBO, unsigned int &VAO, unsigned int &vertexCount);
 void draw(unsigned int shaderProgram, unsigned int VAO, unsigned int vertexCount);
+void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
+    GLenum severity, GLsizei length,
+    const GLchar* msg, const void* data);
 
 
 // glfw functions
@@ -29,19 +32,19 @@ const unsigned int SCR_HEIGHT = 800;
 // ---------------
 const char *vertexShaderSource = "#version 330 core\n"
                                  "layout (location = 0) in vec3 aPos;\n"
-                                 "layout (location = 1) in vec3 aColor;\n"
-                                 "out vec3 vtxColor; // output a color to the fragment shader\n"
+                                // "layout (location = 1) in vec3 aColor;\n"
+                                 "out vec3 ; // output a color to the fragment shader\n"
                                  "void main()\n"
                                  "{\n"
                                  "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "   vtxColor = aColor;\n"
+                                // "   vtxColor = aColor;\n"
                                  "}\0";
 const char *fragmentShaderSource = "#version 330 core\n"
                                    "out vec4 FragColor;\n"
-                                   "in  vec3 vtxColor;\n"
+//"in  vec3 vtxColor;\n"
                                    "void main()\n"
                                    "{\n"
-                                   "   FragColor = vec4(vtxColor, 1.0);\n"
+                                   "   FragColor = vec4( 1.0, 1.0, 1.0, 1.0);\n"
                                    "}\n\0";
 
 
@@ -143,6 +146,7 @@ int main()
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
+
         // input
         // -----
         processInput(window);
@@ -162,6 +166,7 @@ int main()
         glfwPollEvents();
 
         currentTime += 0.01;
+       // setupShape(shaderProgram, currentTime, posVBO, colorVBO, VAO, vertexCount);
         setupShape(shaderProgram, currentTime, posVBO, colorVBO, VAO, vertexCount);
 
     }
@@ -229,16 +234,16 @@ void setupShape(const unsigned int shaderProgram, float time, unsigned int &posV
     int posAttributeLocation = glGetAttribLocation(shaderProgram, "aPos");
 
     glEnableVertexAttribArray(posAttributeLocation);
-    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(posAttributeLocation, posSize, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
 
     // set vertex shader attribute "aColor"
     glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
 
-    int colorSize = 3;
+    /*int colorSize = 3;
     int colorAttributeLocation = glGetAttribLocation(shaderProgram, "aColor");
 
     glEnableVertexAttribArray(colorAttributeLocation);
-    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(colorAttributeLocation, colorSize, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);*/
 
     glBindVertexArray(0);
 }

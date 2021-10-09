@@ -8,15 +8,15 @@
 
 // function declarations
 // ---------------------
-void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO);
-void setupShape(unsigned int shaderProgram, unsigned int &VAO, unsigned int &vertexCount);
+void createArrayBuffer(const std::vector<float>& array, unsigned int& VBO);
+void setupShape(unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount);
 void draw(unsigned int shaderProgram, unsigned int VAO, unsigned int vertexCount);
 
 
 // glfw functions
 // --------------
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow* window);
 
 
 // settings
@@ -27,22 +27,22 @@ const unsigned int SCR_HEIGHT = 800;
 
 // shader programs
 // ---------------
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "layout (location = 1) in vec3 aColor;\n"
-                                 "out vec3 vtxColor; // output a color to the fragment shader\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "   vtxColor = aColor;\n"
-                                 "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "in  vec3 vtxColor;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   "   FragColor = vec4(vtxColor, 1.0);\n"
-                                   "}\n\0";
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in vec3 aColor;\n"
+"out vec3 vtxColor; // output a color to the fragment shader\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   vtxColor = aColor;\n"
+"}\0";
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"in  vec3 vtxColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(vtxColor, 1.0);\n"
+"}\n\0";
 
 
 
@@ -56,7 +56,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
+#ifdef _APPLE_
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
 #endif
 
@@ -164,7 +164,7 @@ int main()
 
 // create a vertex buffer object (VBO) from an array of values, return VBO handle (set as reference)
 // -------------------------------------------------------------------------------------------------
-void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO){
+void createArrayBuffer(const std::vector<float>& array, unsigned int& VBO) {
     // create the VBO on OpenGL and get a handle to it
     glGenBuffers(1, &VBO);
     // bind the VBO
@@ -176,25 +176,38 @@ void createArrayBuffer(const std::vector<float> &array, unsigned int &VBO){
 
 // create the geometry, a vertex array object representing it, and set how a shader program should read it
 // -------------------------------------------------------------------------------------------------------
-void setupShape(const unsigned int shaderProgram,unsigned int &VAO, unsigned int &vertexCount){
+void setupShape(const unsigned int shaderProgram, unsigned int& VAO, unsigned int& vertexCount) {
 
     unsigned int posVBO, colorVBO;
     createArrayBuffer(std::vector<float>{
-            // position
-             0.0f,  0.0f, 0.0f,
-             0.5f,  0.0f, 0.0f,
-             0.5f,  0.5f, 0.0f
+        // position
+        /*0.5f,  0.5f, 0.0f,  // top right
+         0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f,  0.5f, 0.0f,  // top left
+         */
+         // second triangle
+        -0.5f, -0.5f, 0.0f,
+            -0.5f, 0.5f, 0.0f,// bottom right
+            0.5f, 0.5f, 0.0f,// bottom left
+            -0.5f, -0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            0.5f, 0.5f, 0.0f,
     }, posVBO);
 
-    createArrayBuffer( std::vector<float>{
-            // color
-            1.0f,  0.0f, 0.0f,
-            1.0f,  0.0f, 0.0f,
-            1.0f,  0.0f, 0.0f
+    createArrayBuffer(std::vector<float>{
+        // color
+        1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f
+
+
     }, colorVBO);
 
     // tell how many vertices to draw
-    vertexCount = 3;
+    vertexCount = 6;
 
     // create a vertex array object (VAO) on OpenGL and save a handle to it
     glGenVertexArrays(1, &VAO);
@@ -225,7 +238,7 @@ void setupShape(const unsigned int shaderProgram,unsigned int &VAO, unsigned int
 
 // tell opengl to draw a vertex array object (VAO) using a give shaderProgram
 // --------------------------------------------------------------------------
-void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsigned int vertexCount){
+void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsigned int vertexCount) {
     // set active shader program
     glUseProgram(shaderProgram);
     // bind vertex array object
@@ -237,7 +250,7 @@ void draw(const unsigned int shaderProgram, const unsigned int VAO, const unsign
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -252,4 +265,3 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
-
